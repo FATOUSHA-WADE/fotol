@@ -1,7 +1,7 @@
 // Middleware d'authentification pour FotoLouJay
 
 import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import { RoleUtilisateur, MESSAGES_ERREUR } from '../enums/message';
 
@@ -53,7 +53,6 @@ export const verifierToken = async (req: Request, res: Response, next: NextFunct
     const utilisateur = await prisma.utilisateur.findUnique({
       where: { 
         id: decoded.utilisateurId,
-        estActif: true
       },
       select: {
         id: true,
@@ -72,7 +71,7 @@ export const verifierToken = async (req: Request, res: Response, next: NextFunct
 
     // Ajout des informations utilisateur à la requête
     req.utilisateur = {
-      id: utilisateur.id,
+  id: Number(utilisateur.id),
       email: utilisateur.email,
       role: utilisateur.role as RoleUtilisateur
     };
@@ -132,8 +131,7 @@ export const authentificationOptionnelle = async (req: Request, res: Response, n
 
     const utilisateur = await prisma.utilisateur.findUnique({
       where: { 
-        id: decoded.utilisateurId,
-        estActif: true
+        id: decoded.utilisateurId
       },
       select: {
         id: true,
@@ -144,7 +142,7 @@ export const authentificationOptionnelle = async (req: Request, res: Response, n
 
     if (utilisateur) {
       req.utilisateur = {
-        id: utilisateur.id,
+  id: Number(utilisateur.id),
         email: utilisateur.email,
         role: utilisateur.role as RoleUtilisateur
       };
@@ -180,7 +178,7 @@ export const verifierProprieteProduit = async (req: Request, res: Response, next
 
     // Vérification de la propriété pour les utilisateurs normaux
     const produit = await prisma.produit.findUnique({
-      where: { id: produitId },
+  where: { id: produitId },
       select: { utilisateurId: true }
     });
 
@@ -191,7 +189,7 @@ export const verifierProprieteProduit = async (req: Request, res: Response, next
       });
     }
 
-    if (produit.utilisateurId !== utilisateurId) {
+  if (String(produit.utilisateurId) !== String(utilisateurId)) {
       return res.status(403).json({
         success: false,
         message: MESSAGES_ERREUR.PRODUIT_NON_AUTORISE
